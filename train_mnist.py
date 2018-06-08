@@ -121,8 +121,7 @@ def main():
     '''
     additional extensions
     '''
-    log_dir = os.path.join(args.out, 'tensorboard')
-    trainer.extend(ParameterStatisticsX(model, prefix='model', log_dir=log_dir))
+    trainer.extend(ParameterStatisticsX(model, prefix='model'))
     trainer.extend(graphviz_dot(file_name='*.dot'))
 
     # Run the training

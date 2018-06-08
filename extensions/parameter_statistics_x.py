@@ -5,6 +5,7 @@ import tempfile
 import six
 import numpy
 
+import cupy
 import chainer
 from chainer.backends import cuda
 from chainer import reporter
@@ -59,7 +60,25 @@ class ParameterStatisticsX(extension.Extension):
         self._histogram = histogram
         self._trigger = trigger_module.get_trigger(trigger)
         self._skip_nan_params = skip_nan_params
-        self._logger = SummaryWriter(log_dir=log_dir)
+        self._log_dir = log_dir 
+        self._logger = None
+
+    def _init_trigger(self, trainer):
+        if trainer.updater.iteration == 1:
+
+            # setup log_dir and logger
+            if self._log_dir is None:
+                self._log_dir = os.path.join(trainer.out, '.tensorboard')
+            self._logger = SummaryWriter(log_dir=self._log_dir)
+            
+            return True
+        else:
+            return False
+
+    def _to_cpu(self, x):
+        if x.__class__ == cupy.core.core.ndarray:
+            x = cuda.to_cpu(x)
+        return x
 
     def __call__(self, trainer):
         """Execute the statistics extension.
@@ -72,7 +91,7 @@ class ParameterStatisticsX(extension.Extension):
                 invoked this extension.
         """
 
-        if self._trigger(trainer):
+        if self._init_trigger(trainer) or self._trigger(trainer):
 
             statistics = {}
 
@@ -119,8 +138,7 @@ class ParameterStatisticsX(extension.Extension):
                                     param_name=param_name,
                                     attr_name=attr_name,
                                 )
-                                
-                                self._logger.add_histogram(key, cuda.to_cpu(params), trainer.updater.iteration)
+                                self._logger.add_histogram(key, self._to_cpu(params), trainer.updater.iteration)
 
             for k, v in statistics.items():
-                self._logger.add_scalar(k, v, trainer.updater.iteration)
+                self._logger.add_scalar(k, self._to_cpu(v), trainer.updater.iteration)
