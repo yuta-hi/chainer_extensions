@@ -20,3 +20,9 @@ trainer.extend(ParameterStatisticsX(model, prefix='model', log_dir=<log_dir>))
 cd <log_dir>
 tensorboard --logdir=./
 ```
+
+## Outputting images by the dot command
+```python
+from extensions import graphviz_dot
+trainer.extend(graphviz_dot(file_name='*.dot'))
+```

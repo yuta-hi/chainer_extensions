@@ -7,6 +7,7 @@ import chainer.functions as F
 import chainer.links as L
 from chainer import training
 from extensions import ParameterStatisticsX
+from extensions import graphviz_dot
 
 # Network definition
 class MLP(chainer.Chain):
@@ -122,7 +123,7 @@ def main():
     '''
     log_dir = os.path.join(args.out, 'tensorboard')
     trainer.extend(ParameterStatisticsX(model, prefix='model', log_dir=log_dir))
-
+    trainer.extend(graphviz_dot(file_name='*.dot'))
 
     # Run the training
     trainer.run()
